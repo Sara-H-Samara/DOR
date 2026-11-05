@@ -1,5 +1,6 @@
 package com.sara.backend.auth;
 
+import com.sara.backend.security.JwtService;
 import com.sara.backend.user.Role;
 import com.sara.backend.user.User;
 import com.sara.backend.user.UserRepository;
@@ -19,6 +20,9 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtService jwtService;
+
     public UserResponse register(RegisterRequest request) {
         String email = request.email().trim().toLowerCase();
 
@@ -33,5 +37,16 @@ public class AuthService {
         user.setRole(Role.STUDENT);
 
         return UserResponse.from(userRepository.save(user));
+    }
+
+    public LoginResponse login(LoginRequest request) {
+        String email = request.email().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
+                .filter(found -> passwordEncoder.matches(request.password(), found.getPasswordHash()))
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Email or password is incorrect."));
+
+        return new LoginResponse(jwtService.generateToken(user), user.getFullName(), user.getRole());
     }
 }
