@@ -49,4 +49,10 @@ public class AuthService {
 
         return new LoginResponse(jwtService.generateToken(user), user.getFullName(), user.getRole());
     }
+
+    public UserResponse me(String email) {
+        return userRepository.findByEmail(email)
+                .map(UserResponse::from)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found."));
+    }
 }
