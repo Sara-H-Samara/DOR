@@ -1,0 +1,37 @@
+package com.sara.backend.auth;
+
+import com.sara.backend.user.Role;
+import com.sara.backend.user.User;
+import com.sara.backend.user.UserRepository;
+import com.sara.backend.user.UserResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+public class AuthService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public UserResponse register(RegisterRequest request) {
+        String email = request.email().trim().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered.");
+        }
+
+        User user = new User();
+        user.setFullName(request.fullName().trim());
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setRole(Role.STUDENT);
+
+        return UserResponse.from(userRepository.save(user));
+    }
+}
